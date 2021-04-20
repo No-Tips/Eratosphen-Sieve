@@ -2,6 +2,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include<windows.h>
+
 using namespace std;
 
 vector<int> Numbers;
@@ -10,7 +12,7 @@ int Bad_Eratos(0); //На случай, если число, что ввели не ровно делится на MAX_CO
 
 int BEAUTY_COL_WIDTH(1)/*Ширина ячейки */, BEAUTY_COL_SIZE/* Ширина одной строки */;
 const int MAX_COL_WIDTH(10)/* Максимальная ширина одной строки */, MIN_COL_WIDTH(4)/* Минимальная ширина строки*/;
-
+const int DELAY = 5*100; //Задержка между выводами. (0,5 секунд)
 
 string DIV_LINE = "";/* Разграничитель */
 string DIV_CHAR = "=";
@@ -19,7 +21,7 @@ string END_ITTER = "|";
 
 bool BeautySetup() { //Я хочу сделать решето красивым на вид.
 
-	END_ITTER += "\n";
+	//END_ITTER += "\n";
 	START_ITTER += " ";
 
 	//Считаем максимальную длину числа
@@ -84,46 +86,73 @@ string OutNum(int number) {
 }
 
 
-void Output() {
 
+
+string* GenSieve(string* sieve, int columns) { //Генерация полного решета. Каждая новый элемент массива - новая строка.
+	for(int i = 0; i< columns;i++) sieve[i] = ""; //Сетапим наше Решето
 	int itter = 0;
-	cout << DIV_LINE;
-	for(vector<int>::iterator it = Numbers.begin(); it != Numbers.end(); it++,itter++) 
+	int curcolumn = 0;
+	for (vector<int>::iterator it = Numbers.begin(); it != Numbers.end(); it++, itter++)
 	{
 		string out = "";
-		if(*it) out = OutNum(*it);
-		else {//Если мы "удалили" элемент.
-			for (int i = 0; i < BEAUTY_COL_WIDTH;i++) {
-				out += " ";
-			}
-			out = START_ITTER + out + " ";
-		}
-		if (itter == BEAUTY_COL_SIZE) {out = END_ITTER + out; itter = 0;}
-		cout << out;
+		if (*it) out = OutNum(*it);
+		if (itter == BEAUTY_COL_SIZE) { sieve[curcolumn] += END_ITTER; itter = 0; curcolumn++; }
+		sieve[curcolumn] += out;
 	}
 	while (Bad_Eratos) {
 		string out = "";
 		for (int i = 0; i < BEAUTY_COL_WIDTH;i++) {
 			out += " ";
 		}
-		cout << START_ITTER + out + " ";
+		sieve[curcolumn] += START_ITTER + out + " ";
 		Bad_Eratos--;
 	}
-	cout << END_ITTER + DIV_LINE;
+	sieve[curcolumn] += END_ITTER;
+	return sieve;
 }
 
-void EratospenSieve(int num) {
-	for (int itter = 2; itter * itter < num; itter++) {
-		int pos = itter;
-		while(pos != Numbers.size()){
-			if (Numbers[pos] % itter == 0) {
-				Numbers[pos] = 0;
-			}
-			pos++;
-		}
+void Output(string* Sieve, int column) { //Полный вывод Решета
+	cout << DIV_LINE;
+	for (int i = 0;i < column; i++) cout << Sieve[i] << "\n";
+	cout << DIV_LINE;
+}
+
+
+
+string replace(string findstr, string data) {
+	string newstr = " ";
+	for (int i = 1; i < findstr.length();i++) {
+		newstr += " ";
 	}
+	
+	data.replace(data.find(findstr), (findstr.length()), newstr);
+	return data;
 }
 
+string* EratospenSieve(string* Sieve, int num, int column) {
+	cout << DIV_LINE;
+	int curcolumn = 0;
+	Sieve[curcolumn];
+	for (curcolumn; curcolumn < column;curcolumn++) {
+		cout << Sieve[curcolumn];
+		for (int itter = 2; itter * itter < num; itter++) {
+			int pos = (BEAUTY_COL_SIZE * curcolumn);
+			while (pos != (BEAUTY_COL_SIZE * (curcolumn + 1))) {
+				if (Numbers[pos] % itter == 0 and itter!=Numbers[pos]) {
+					//Заменяем наш элемент на пробелы	
+					Sieve[curcolumn]=replace((to_string(Numbers[pos])), Sieve[curcolumn]);
+					cout <<"\r"<< Sieve[curcolumn] << flush;
+					Sleep(DELAY);
+					Numbers[pos] = 1;
+				}
+				pos++;
+			}
+		}
+		cout << "\n";
+	}
+	cout << DIV_LINE;
+	return Sieve;
+}
 
 int main() {
 	int num;
@@ -139,11 +168,11 @@ int main() {
 
 	//Я решил, что весь вывод у меня будет все же в виде текста, чтобы по красоте с ним работать.
 	int column = (Numbers.size() + Bad_Eratos) / BEAUTY_COL_SIZE;
-	string** Sieve = new string*[column];			//Создаем
-	for (int temp = 0; temp < column;temp++) {		//Наше решето Эратосфена
-		Sieve[temp] = new string[DIV_LINE.length()];//Как прекрасный двумерный массив
-	}
-	Output();
-	EratospenSieve(num);
-	Output();
+	string* Sieve = new string[column];			//Создаем наше решето Эратосфена
+	Sieve = GenSieve(Sieve, column);
+	Output(Sieve, column);
+	Sieve = EratospenSieve(Sieve, num, column);
+	Output(Sieve, column);
+
+
 }
