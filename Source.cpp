@@ -3,6 +3,10 @@
 #include <vector>
 #include <string>
 #include<windows.h>
+#include <random>
+#include <ctime>
+#include <cmath>
+#define llint long long int
 
 using namespace std;
 
@@ -12,12 +16,36 @@ int Bad_Eratos(0); //На случай, если число, что ввели не ровно делится на MAX_CO
 
 int BEAUTY_COL_WIDTH(1)/*Ширина ячейки */, BEAUTY_COL_SIZE/* Ширина одной строки */;
 const int MAX_COL_WIDTH(10)/* Максимальная ширина одной строки */, MIN_COL_WIDTH(4)/* Минимальная ширина строки*/;
-const int DELAY = 5*100; //Задержка между выводами. (0,5 секунд)
+const int DELAY = 2*100; /*Задержка между выводами. (0,2 секунды)*/
 
-string DIV_LINE = "";/* Разграничитель */
+const int NUM_OF_TESTS = 5; /*Количество тестов, которое проходит число*/
+const int MINMAX_NUM_TO_CHECK = 100; /*Мин-макс число, что используется при подборе чисел*/
+
+string DIV_LINE = "";
 string DIV_CHAR = "=";
 string START_ITTER = "|";
 string END_ITTER = "|";
+
+llint mod(string num, llint a)//Модуль для больших чисел
+{
+	llint res = 0;
+	for (int i = 0; i < num.length(); i++)
+		res = (res * 10 + (int)num[i] - '0') % a;
+	return res;
+}
+
+llint powmod(llint a, llint b, llint n) {
+	llint x = 1, y = a;
+	while (b > 0) {
+		if (b % 2 == 1) {
+			x = (x * y) % n; // multiplying with base
+		}
+		y = (y * y) % n; // squaring the base
+		b /= 2;
+	}
+	return x % n;
+}
+
 
 bool BeautySetup() { //Я хочу сделать решето красивым на вид.
 
@@ -49,7 +77,7 @@ bool BeautySetup() { //Я хочу сделать решето красивым на вид.
 			}
 		}
 	}
-	if (Switch) {//Если прямо пиздец, и не нашло такого числа.
+	if (Switch) {//Если прямо пиздец, и не нашло такого варианта.
 		printf("MAX_COL_WIDTH setup error!\n");
 		return 1; 
 	}
@@ -65,7 +93,7 @@ bool BeautySetup() { //Я хочу сделать решето красивым на вид.
 	return 0;
 }
 
-string AddSpace(string str, bool Switch) {
+string AddSpace(string str, bool Switch) {//Выравниваем наши числа по красоте
 	if (Switch) str += " ";
 	else str = " " + str;
 	return str;
@@ -99,7 +127,7 @@ string* GenSieve(string* sieve, int columns) { //Генерация полного решета. Кажда
 		if (itter == BEAUTY_COL_SIZE) { sieve[curcolumn] += END_ITTER; itter = 0; curcolumn++; }
 		sieve[curcolumn] += out;
 	}
-	while (Bad_Eratos) {
+	while (Bad_Eratos) { //Добавляем пустые ячейки, если они есть.
 		string out = "";
 		for (int i = 0; i < BEAUTY_COL_WIDTH;i++) {
 			out += " ";
@@ -154,7 +182,73 @@ string* EratospenSieve(string* Sieve, int num, int column) {
 	return Sieve;
 }
 
+
+
+bool MillerRabinTest(int n, int k) {
+
+	vector<llint> testnumbers = { 0 };
+	int q,s,t(n-1);
+	bool Switch(false), SuccesfullTest;
+	for (s = -(MINMAX_NUM_TO_CHECK) ;s < MINMAX_NUM_TO_CHECK;s++) {
+		for (q = 1;q < MINMAX_NUM_TO_CHECK; q += 2) {
+			if (t == pow(2, s) * q) {
+				Switch = true;
+				break;
+			}
+		}
+		if (Switch) break;
+	}
+	if (!Switch) {
+		printf("\nCannot choose a number!\n");
+		return 0;
+	}
+	for (int i = 0; i < k; i++)
+	{
+		SuccesfullTest = false;
+		llint a;
+		bool IsTested;
+		do
+		{
+			IsTested = false;
+			do {
+				a = (((llint)(rand()))) %(n-2);
+				if (a > 2) break;
+			} while (a < 2);
+			for (int l = 0; l < testnumbers.size();l++) {
+				if (testnumbers[l] == a) {
+					IsTested = true; break;
+				}
+			}
+			testnumbers.push_back(a);
+		} while (IsTested);
+
+		llint x =powmod(a,t,n);
+		printf("\nTrying s = %d, q = %d, a = %I64d, x = %I64d",s,q,a,x);
+		if (x == 1 or x == ((llint)n - 1))
+			continue;
+		for (llint j = 1; j < s; j++)
+		{
+			x = powmod(x, 2, n);
+			if (x == 1) {
+				testnumbers.clear();
+				return false;
+			}
+			if (x == ((llint)n - 1)) {
+				SuccesfullTest = true;
+				break;
+			}
+		}
+		if (!SuccesfullTest){
+			testnumbers.clear();
+			return false;
+		}
+	}
+	testnumbers.clear();
+	return true;
+}
+
 int main() {
+	srand(time(0));
 	int num;
 	printf("Enter your number: ");
 	cin >> num;
@@ -172,7 +266,22 @@ int main() {
 	Sieve = GenSieve(Sieve, column);
 	Output(Sieve, column);
 	Sieve = EratospenSieve(Sieve, num, column);
-	Output(Sieve, column);
+	//Удаляем все лишние элементы.
+	remove(Numbers.begin(), Numbers.end(), 1);
 
 
+	bool SimpleNumber;
+	int curnumber;
+	printf("\n===MillerRabinTest===\n");
+	//Проверим пару случайных элементов
+	for (int i = 0;i < 6;i++) {
+		do {
+			curnumber = Numbers.at(rand() % Numbers.size());
+		} while (curnumber < 10); //Тест не работает с настолько маленькими числами.
+		SimpleNumber = MillerRabinTest(curnumber, NUM_OF_TESTS);
+		if (SimpleNumber) {
+			printf("\nNumber %d completed all tests.\n", curnumber);
+		}
+		else printf("\nNumber %d FAILED a test.\n", curnumber);
+	}
 }
