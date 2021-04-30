@@ -26,12 +26,18 @@ string DIV_CHAR = "=";
 string START_ITTER = "|";
 string END_ITTER = "|";
 
-llint mod(string num, llint a)//Модуль для больших чисел
-{
-	llint res = 0;
-	for (int i = 0; i < num.length(); i++)
-		res = (res * 10 + (int)num[i] - '0') % a;
-	return res;
+bool gcd(llint a, llint b) {
+
+	while (a != b) {
+		if (a > b) {
+			llint tmp = a;	
+			a = b;				
+			b = tmp;
+		}
+		b = b - a;
+	}
+	if (a == 1) return true;
+	else return false;
 }
 
 llint powmod(llint a, llint b, llint n) {
@@ -184,7 +190,7 @@ string* EratospenSieve(string* Sieve, int num, int column) {
 
 
 
-bool MillerRabinTest(int n, int k) {
+bool MillerRabinTest(int n) {
 
 	vector<llint> testnumbers = { 0 };
 	int q,s,t(n-1);
@@ -202,7 +208,7 @@ bool MillerRabinTest(int n, int k) {
 		printf("\nCannot choose a number!\n");
 		return 0;
 	}
-	for (int i = 0; i < k; i++)
+	for (int i = 0; i < NUM_OF_TESTS; i++)
 	{
 		SuccesfullTest = false;
 		llint a;
@@ -211,8 +217,7 @@ bool MillerRabinTest(int n, int k) {
 		{
 			IsTested = false;
 			do {
-				a = (((llint)(rand()))) %(n-2);
-				if (a > 2) break;
+				a = (((llint)(rand()))) %((llint)n-2);
 			} while (a < 2);
 			for (int l = 0; l < testnumbers.size();l++) {
 				if (testnumbers[l] == a) {
@@ -247,6 +252,43 @@ bool MillerRabinTest(int n, int k) {
 	return true;
 }
 
+bool SoloveiStrassen(int n) {
+	vector<llint> testnumbers = { 0 };
+	for (int i = 0; i < NUM_OF_TESTS;++i) {
+
+		llint a;
+		bool IsTested;
+		do
+		{
+			IsTested = false;
+			do {
+				a = (((llint)(rand()))) % ((llint)n - 1);
+			} while (a < 2);
+			if (!(gcd(a, n))) return false;
+
+			for (int l = 0; l < testnumbers.size();l++) {
+				if (testnumbers[l] == a) {
+					IsTested = true; break;
+				}
+			}
+			testnumbers.push_back(a);
+		} while (IsTested);
+
+		int b = ceil(((double)n - 1) / 2);
+		int z = powmod(a, b, n);
+		int y;
+		if (a < n) y = 1;
+		else y = ((a / n) + 1);
+		y = y % n;
+		printf("\n Trying a = %I64d, z = 1, y = %d",a,y);
+
+		if (z != y and z != (n - 1)) return false;
+	}
+	return true;
+}
+
+
+
 int main() {
 	srand(time(0));
 	int num;
@@ -278,7 +320,20 @@ int main() {
 		do {
 			curnumber = Numbers.at(rand() % Numbers.size());
 		} while (curnumber < 10); //Тест не работает с настолько маленькими числами.
-		SimpleNumber = MillerRabinTest(curnumber, NUM_OF_TESTS);
+		SimpleNumber = MillerRabinTest(curnumber);
+		if (SimpleNumber) {
+			printf("\nNumber %d completed all tests.\n", curnumber);
+		}
+		else printf("\nNumber %d FAILED a test.\n", curnumber);
+	}
+
+	printf("\n\n===SoloveiStrassenTest===\n");
+	//Проверим пару случайных элементов
+	for (int i = 0;i < 6;i++) {
+		do {
+			curnumber = Numbers.at(rand() % Numbers.size());
+		} while (curnumber < 10); //Тест не работает с настолько маленькими числами.
+		SimpleNumber = SoloveiStrassen(curnumber);
 		if (SimpleNumber) {
 			printf("\nNumber %d completed all tests.\n", curnumber);
 		}
